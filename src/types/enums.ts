@@ -1,0 +1,7 @@
+export type DeviceStatus = 'ALERT' | 'OFFLINE' | 'ONLINE' | 'SLEEPING'
+export type LockStatus = 'FAULT' | 'LOCKED' | 'UNKNOWN' | 'UNLOCKED'
+export type LightStatus = 'FAULT' | 'OFF' | 'ON' | 'UNKNOWN'
+export type PowerMode = 'DEEP_SLEEP' | 'NORMAL'
+export type EventStatus = 'ACTIVE' | 'DETECTED' | 'FALSE_ALARM' | 'RESOLVED'
+export type Severity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL'
+export type UserRole = 'HOMEOWNER' | 'B2B_ADMIN' | 'OWNER' | 'RENTER' | 'BUILDING_ADMIN' | 'SYSTEM_ADMIN'
