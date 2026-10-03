@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { subscriptionService } from '../services/subscriptionService'
 import type { BillingPeriod, CheckoutRequest, CurrentSubscription, CustomerType, SubscriptionPlan, SubscriptionPlanCode } from '../types/subscription'
 import { useSubscription } from '../features/subscriptions/hooks/useSubscription'
+import { useAuthStore } from '../store/authStore'
 
 const money = (value: number) => value > 0 ? `S/ ${value.toFixed(2)}` : 'A medida'
 
@@ -54,6 +55,9 @@ const initialForm: CheckoutRequest = {
 export function SubscriptionPage() {
   const queryClient = useQueryClient()
   const { current } = useSubscription()
+  const user = useAuthStore((state) => state.user)
+  const isB2B = user?.role === 'BUILDING_ADMIN' || user?.role === 'B2B_ADMIN' || user?.role === 'SYSTEM_ADMIN'
+
   const plansQuery = useQuery({
     queryKey: ['subscription', 'plans'],
     queryFn: async () => {
@@ -66,11 +70,20 @@ export function SubscriptionPage() {
     },
   })
 
-  const [form, setForm] = useState<CheckoutRequest>(initialForm)
+  const [form, setForm] = useState<CheckoutRequest>(() => ({
+    ...initialForm,
+    planCode: isB2B ? 'CLOUD_BUILDING' : 'CLOUD_PLUS',
+    customerType: isB2B ? 'COMPANY' : 'PERSON',
+  }))
   const [order, setOrder] = useState<{ orderId: string; amount: number; currency: string } | null>(null)
   const [step, setStep] = useState<'plans' | 'checkout'>('plans')
 
-  const plans = plansQuery.data ?? subscriptionService.fallbackPlans
+  const allPlans = plansQuery.data ?? subscriptionService.fallbackPlans
+  const plans = allPlans.filter((plan) => {
+    if (isB2B) return plan.code === 'CLOUD_BUILDING' || plan.code === 'CLOUD_ENTERPRISE'
+    return plan.code === 'CLOUD_ESSENTIAL' || plan.code === 'CLOUD_PLUS'
+  })
+
   const selectedPlan = plans.find((plan) => plan.code === form.planCode) ?? plans[0]
 
   const checkoutMutation = useMutation({

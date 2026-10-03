@@ -87,7 +87,7 @@ export function RegisterPage() {
       useAuthStore.getState().setSession(response.token, response.user, true, response.refreshToken)
       sessionStorage.removeItem(draftKey)
       toast.success('Cuenta creada correctamente')
-      navigate('/dashboard')
+      navigate('/subscription')
     } catch (error) {
       if (error instanceof ApiError) {
         error.fieldErrors?.forEach(({ field, message }) => {
