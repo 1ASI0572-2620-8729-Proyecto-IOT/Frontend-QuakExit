@@ -6,8 +6,8 @@ import type { BackendPropertyLayout, PropertyLayout, SimulationRequest, Simulati
 
 const mockLayout: PropertyLayout = {
   levels: [
-    { id: 'level-1', name: 'Piso 1', cards: [{ id: 'card-1', type: 'DOOR', name: 'Puerta Principal', state: 'LOCKED', battery: 88 }, { id: 'card-2', type: 'SPACE', name: 'Sala', state: 'ONLINE', battery: 76 }] },
-    { id: 'level-2', name: 'Piso 2', cards: [{ id: 'card-3', type: 'SPACE', name: 'Cuarto Principal', state: 'ONLINE', battery: 63 }] },
+    { id: 'level-1', floor: 1, name: 'Piso 1', cards: [{ id: 'card-1', type: 'DOOR', name: 'Puerta Principal', state: 'LOCKED', battery: 88, deviceIds: [] }, { id: 'card-2', type: 'SPACE', name: 'Sala', state: 'ONLINE', battery: 76, deviceIds: [] }] },
+    { id: 'level-2', floor: 2, name: 'Piso 2', cards: [{ id: 'card-3', type: 'SPACE', name: 'Cuarto Principal', state: 'ONLINE', battery: 63, deviceIds: [] }] },
   ],
 }
 
@@ -45,14 +45,16 @@ export async function triggerSimulation(request: SimulationRequest) {
 function normalizeLayout(layout: BackendPropertyLayout): PropertyLayout {
   return {
     levels: layout.levels.map((level, levelIndex) => ({
-      id: `level-${level.floor ?? levelIndex + 1}`,
+      id: String(level.id ?? `level-${level.floor ?? levelIndex + 1}`),
+      floor: level.floor ?? levelIndex + 1,
       name: level.name,
       cards: level.rooms.map((room, roomIndex) => ({
-        id: `room-${level.floor ?? levelIndex + 1}-${roomIndex}`,
-        type: room.name.toLowerCase().includes('puerta') ? 'DOOR' : 'SPACE',
+        id: String(room.id ?? `room-${level.floor ?? levelIndex + 1}-${roomIndex}`),
+        type: room.type ?? 'SPACE',
         name: room.name,
         state: 'ONLINE',
         battery: undefined,
+        deviceIds: room.deviceIds ?? [],
       })),
     })),
   }
@@ -61,9 +63,20 @@ function normalizeLayout(layout: BackendPropertyLayout): PropertyLayout {
 function serializeLayout(layout: PropertyLayout): BackendPropertyLayout {
   return {
     levels: layout.levels.map((level, index) => ({
+      id: toNumericId(level.id),
       floor: index + 1,
       name: level.name,
-      rooms: level.cards.map((card) => ({ name: card.name })),
+      rooms: level.cards.map((card) => ({
+        id: toNumericId(card.id),
+        name: card.name,
+        type: card.type,
+        deviceIds: card.deviceIds,
+      })),
     })),
   }
+}
+
+function toNumericId(id: string) {
+  const numericId = Number(id)
+  return Number.isSafeInteger(numericId) ? numericId : undefined
 }
