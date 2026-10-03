@@ -9,8 +9,8 @@ import type { AuthResponse } from '../types/auth'
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('admin@quakexit.io')
-  const [password, setPassword] = useState('Admin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -73,6 +73,7 @@ export function LoginPage() {
               <span className="mb-2 block text-sm font-medium text-slate-700">Correo</span>
               <input
                 type="email"
+                autoComplete="username"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 focus:border-info focus:outline-none"
@@ -85,6 +86,7 @@ export function LoginPage() {
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 pr-11 focus:border-info focus:outline-none"
