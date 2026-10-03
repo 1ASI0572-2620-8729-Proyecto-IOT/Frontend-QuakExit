@@ -126,12 +126,26 @@ export const subscriptionService = {
     return asArray(source).map(normalizePlan)
   },
   async getCurrent() {
-    const { data } = await http.get<unknown>('/api/v1/subscriptions/current')
-    return normalizeCurrent(data)
+    try {
+      const { data } = await http.get<unknown>('/api/v1/subscriptions/current')
+      return normalizeCurrent(data)
+    } catch (error: any) {
+      if (error?.status === 404 || error?.status === 403) {
+        return normalizeCurrent({ status: 'EXPIRED' }) // Treat as no active subscription
+      }
+      throw error
+    }
   },
   async getFeatures() {
-    const { data } = await http.get<unknown>('/api/v1/subscriptions/features')
-    return normalizeFeatures(data)
+    try {
+      const { data } = await http.get<unknown>('/api/v1/subscriptions/features')
+      return normalizeFeatures(data)
+    } catch (error: any) {
+      if (error?.status === 404 || error?.status === 403) {
+        return normalizeFeatures({}) // Treat as no features enabled
+      }
+      throw error
+    }
   },
   async checkout(payload: CheckoutRequest) {
     const { data } = await http.post<unknown>('/api/v1/subscriptions/checkout', payload)

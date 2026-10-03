@@ -3,6 +3,7 @@ import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestCo
 import { env } from '../config/env'
 import { ApiError } from '../types/api-error'
 import { useAuthStore } from '../store/authStore'
+import { toast } from 'sonner'
 
 const http = axios.create({
   baseURL: env.apiUrl || undefined,
@@ -60,6 +61,10 @@ http.interceptors.response.use(
     if (status === 401) {
       useAuthStore.getState().logout()
       window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname)}`)
+    }
+
+    if (status === 403) {
+      toast.error('Esta función requiere una suscripción Premium activa o permisos adicionales.')
     }
 
     return Promise.reject(
