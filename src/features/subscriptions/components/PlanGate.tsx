@@ -54,6 +54,23 @@ export function PlanGate({ feature, children, inline = false }: PlanGateProps) {
     return <>{children}</>
   }
 
+  if (access.isError) {
+    if (inline) {
+      return (
+        <div className="flex items-start gap-4 rounded-2xl border border-danger/30 bg-danger/5 p-4">
+          <p className="text-sm font-semibold text-danger">No se pudo verificar el acceso a {feature}</p>
+        </div>
+      )
+    }
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center p-6">
+        <div className="w-full max-w-md text-center">
+          <p className="text-sm font-semibold text-danger">Error de conexión con el servidor. No se pudo verificar tu suscripción.</p>
+        </div>
+      </div>
+    )
+  }
+
   // Access granted
   if (access.allowed) {
     return <>{children}</>
