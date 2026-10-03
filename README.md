@@ -40,13 +40,16 @@ npm run dev
 
 Abre `http://localhost:5173`.
 
-No es necesario crear un archivo `.env` para desarrollo: por defecto `VITE_API_URL` queda vacio y Axios usa el mismo origen, permitiendo que Vite proxee las llamadas `/api` a `http://localhost:8080`.
+No es necesario crear un archivo `.env` para desarrollo: por defecto `VITE_API_URL` usa `http://localhost:8080`. Para usar el backend real en lugar de mocks, configura `VITE_USE_MOCKS=false`.
 
 Para un backend remoto, crea `.env.local`:
 
 ```powershell
 VITE_API_URL=https://tu-backend.example.com
+VITE_USE_MOCKS=false
 ```
+
+En Netlify configura las mismas variables en Site configuration > Environment variables. Usa la URL pública del backend sin una barra final.
 
 ## Validacion
 
