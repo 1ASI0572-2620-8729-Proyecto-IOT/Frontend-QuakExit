@@ -1,5 +1,6 @@
 import http from '../../../services/http'
 import { env } from '../../../config/env'
+import { ApiError } from '../../../types/api-error'
 
 import type { BackendPropertyLayout, PropertyLayout, SimulationRequest, SimulationResponse } from '../types'
 
@@ -14,8 +15,15 @@ export async function getPropertyLayout() {
   if (env.useMocks) return mockLayout
 
   // API: GET /property/layout
-  const { data } = await http.get<BackendPropertyLayout>('/api/v1/property/layout')
-  return normalizeLayout(data)
+  try {
+    const { data } = await http.get<BackendPropertyLayout>('/api/v1/property/layout')
+    return normalizeLayout(data)
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return savePropertyLayout(mockLayout)
+    }
+    throw error
+  }
 }
 
 export async function savePropertyLayout(layout: PropertyLayout) {

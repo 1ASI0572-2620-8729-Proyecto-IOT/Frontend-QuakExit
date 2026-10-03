@@ -45,6 +45,22 @@ select {
   font: inherit;
 }
 
+.operations-page input,
+.operations-page select,
+.operations-page textarea {
+  color: #0f172a;
+}
+
+.operations-page input::placeholder,
+.operations-page textarea::placeholder {
+  color: #64748b;
+}
+
+.operations-page option {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

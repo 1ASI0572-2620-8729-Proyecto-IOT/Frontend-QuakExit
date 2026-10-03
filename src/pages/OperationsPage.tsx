@@ -104,7 +104,7 @@ export function OperationsPage() {
   const setTabAndReset = (nextTab: Tab) => { setTab(nextTab); setPage(0) }
 
   return (
-    <div className="space-y-6">
+    <div className="operations-page space-y-6">
       <header>
         <p className="text-xs uppercase tracking-[0.22em] text-amber">Centro operativo</p>
         <h1 className="mt-2 text-3xl font-semibold text-slate-900">Auditoría, avisos y reportes</h1>

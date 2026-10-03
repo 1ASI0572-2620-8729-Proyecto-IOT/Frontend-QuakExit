@@ -5,7 +5,11 @@ export function HomeTwin() {
   return (
     <div className="space-y-4">
       <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-4 shadow-soft">
-        <div className="relative mx-auto h-[300px] w-full max-w-[540px] overflow-hidden rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200">
+        <div
+          className="relative mx-auto h-[300px] w-full max-w-[540px] overflow-hidden rounded-2xl bg-gradient-to-b from-slate-100 to-slate-200"
+          role="img"
+          aria-label="Casa"
+        >
           <motion.div
             className="absolute left-1/2 top-10 h-28 w-28 -translate-x-1/2 rounded-full bg-amber-200/70 blur-2xl"
             animate={{ opacity: [0.45, 0.85, 0.45], scale: [1, 1.06, 1] }}
