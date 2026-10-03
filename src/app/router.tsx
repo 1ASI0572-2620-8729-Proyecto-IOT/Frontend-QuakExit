@@ -14,6 +14,7 @@ import { NotFoundPage } from '../pages/NotFoundPage'
 import { BuildingAdminPage } from '../pages/BuildingAdminPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { SimulationPage } from '../pages/SimulationPage'
+import { SubscriptionPage } from '../pages/SubscriptionPage'
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
         ),
       },
       { path: 'operations', element: <OperationsPage /> },
+      { path: 'subscription', element: <SubscriptionPage /> },
     ],
   },
   { path: '/login', element: <LoginPage /> },

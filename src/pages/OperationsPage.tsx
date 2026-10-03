@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+import { PlanGate } from '../features/subscriptions/components/PlanGate'
 import { getAuditRecords } from '../services/auditService'
 import { acknowledgeMaintenanceAlert, getMaintenanceAlerts, resolveMaintenanceAlert } from '../services/maintenanceService'
 import { deactivatePushToken, getNotificationPreferences, getNotifications, registerPushToken, updateNotificationPreferences } from '../services/notificationsService'
@@ -116,9 +117,9 @@ export function OperationsPage() {
       </nav>
 
       {tab === 'notifications' && <NotificationsPanel preferences={preferences} onToggle={updatePreference} preferencesLoading={preferencesQuery.isLoading} token={token} setToken={setToken} tokenId={tokenId} setTokenId={setTokenId} register={() => pushTokenMutation.mutate(token)} deactivate={() => deactivateTokenMutation.mutate(tokenId)} loading={pushTokenMutation.isPending || deactivateTokenMutation.isPending} filters={notificationFilters} setFilters={setNotificationFilters} applyFilters={applyFilters} rows={normalizeRows(notificationsQuery.data)} loadingRows={notificationsQuery.isLoading} />}
-      {tab === 'audit' && <AuditPanel filters={auditFilters} setFilters={setAuditFilters} applyFilters={applyFilters} rows={normalizeRows(auditQuery.data)} loading={auditQuery.isLoading} />}
-      {tab === 'reports' && <ReportsPanel kind={reportKind} setKind={setReportKind} filters={reportFilters} setFilters={setReportFilters} rows={normalizeRows(reportQuery.data)} summary={summaryQuery.data} loading={reportQuery.isLoading || summaryQuery.isLoading} />}
-      {tab === 'maintenance' && <MaintenancePanel filters={maintenanceFilters} setFilters={setMaintenanceFilters} applyFilters={applyFilters} rows={normalizeRows(maintenanceQuery.data)} loading={maintenanceQuery.isLoading} resolutionNote={resolutionNote} setResolutionNote={setResolutionNote} acknowledge={(id) => acknowledgeMutation.mutate(id)} resolve={(id, note) => resolveMutation.mutate({ id, note })} loadingAction={acknowledgeMutation.isPending || resolveMutation.isPending} />}
+      {tab === 'audit' && <PlanGate feature="AUDIT"><AuditPanel filters={auditFilters} setFilters={setAuditFilters} applyFilters={applyFilters} rows={normalizeRows(auditQuery.data)} loading={auditQuery.isLoading} /></PlanGate>}
+      {tab === 'reports' && <PlanGate feature="REPORTS"><ReportsPanel kind={reportKind} setKind={setReportKind} filters={reportFilters} setFilters={setReportFilters} rows={normalizeRows(reportQuery.data)} summary={summaryQuery.data} loading={reportQuery.isLoading || summaryQuery.isLoading} /></PlanGate>}
+      {tab === 'maintenance' && <PlanGate feature="MAINTENANCE"><MaintenancePanel filters={maintenanceFilters} setFilters={setMaintenanceFilters} applyFilters={applyFilters} rows={normalizeRows(maintenanceQuery.data)} loading={maintenanceQuery.isLoading} resolutionNote={resolutionNote} setResolutionNote={setResolutionNote} acknowledge={(id) => acknowledgeMutation.mutate(id)} resolve={(id, note) => resolveMutation.mutate({ id, note })} loadingAction={acknowledgeMutation.isPending || resolveMutation.isPending} /></PlanGate>}
     </div>
   )
 }

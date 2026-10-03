@@ -1,12 +1,26 @@
 import { AlarmClock, DoorOpen, Edit3, Lightbulb, LockKeyhole, Minus, Plus, Save, ShieldAlert, Sparkles, SquareArrowUp, TimerReset, Trash2, Volume2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 
 import { LottiePlaceholder } from '../../../shared/ui/LottiePlaceholder'
+import { ApiError } from '../../../types/api-error'
 import { usePropertyLayout, useSavePropertyLayout, useTriggerSimulation } from '../hooks/usePropertyLayout'
 import type { PropertyCard, PropertyLayout } from '../types'
 
 const cloneLayout = (layout: PropertyLayout): PropertyLayout => ({ levels: layout.levels.map((level) => ({ ...level, cards: level.cards.map((card) => ({ ...card })) })) })
+
+const findDuplicateDeviceIds = (layout: PropertyLayout) => {
+  const seen = new Set<number>()
+  const duplicates = new Set<number>()
+  layout.levels.flatMap((level) => level.cards).forEach((card) => {
+    card.deviceIds.forEach((deviceId) => {
+      if (seen.has(deviceId)) duplicates.add(deviceId)
+      seen.add(deviceId)
+    })
+  })
+  return [...duplicates]
+}
 
 type DeviceCardProps = {
   card: PropertyCard
@@ -105,9 +119,18 @@ export function PropertySimulation() {
     return { levels: current.levels.map((level) => level.id === levelId ? { ...level, cards: level.cards.filter((card) => card.id !== cardId) } : level) }
   })
   const save = async () => {
-    if (draft) {
+    if (!draft) return
+    const duplicateDeviceIds = findDuplicateDeviceIds(draft)
+    if (duplicateDeviceIds.length > 0) {
+      toast.error(`El dispositivo ${duplicateDeviceIds.join(', ')} ya está asignado a otro elemento.`)
+      return
+    }
+    try {
       await saveLayout.mutateAsync(draft)
       setEditing(false)
+      toast.success('Configuración guardada correctamente.')
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : 'No se pudo guardar la configuración.')
     }
   }
   const startSimulation = async () => {
