@@ -62,10 +62,6 @@ http.interceptors.response.use(
       window.location.assign(`/login?redirect=${encodeURIComponent(window.location.pathname)}`)
     }
 
-    if (status === 403) {
-      window.location.assign('/403')
-    }
-
     return Promise.reject(
       new ApiError({
         status,
