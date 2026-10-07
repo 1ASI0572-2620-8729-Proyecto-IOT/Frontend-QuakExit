@@ -9,6 +9,12 @@ type BackendDeviceResponse = Omit<DeviceRecord, 'battery' | 'lastSeen'> & {
   sirenStatus?: string
 }
 
+const mockDevices: DeviceRecord[] = [
+  { id: 'hp-1', alias: 'Puerta principal', deviceCode: 'QX-005', status: 'ONLINE', battery: 88, lockStatus: 'LOCKED', lightStatus: 'OFF', lastSeen: 'Ahora', powerMode: 'NORMAL', connected: true },
+  { id: 'hp-2', alias: 'Dormitorio principal', deviceCode: 'QX-012', status: 'SLEEPING', battery: 63, lockStatus: 'LOCKED', lightStatus: 'OFF', lastSeen: 'Hace 2 min', powerMode: 'DEEP_SLEEP', connected: true },
+  { id: 'hp-3', alias: 'Garaje', deviceCode: 'QX-029', status: 'ALERT', battery: 24, lockStatus: 'FAULT', lightStatus: 'ON', lastSeen: 'Hace 1 min', powerMode: 'NORMAL', connected: true },
+]
+
 const mapDevice = (device: BackendDeviceResponse): DeviceRecord => ({
   ...device,
   battery: device.batteryPercentage,
@@ -16,6 +22,14 @@ const mapDevice = (device: BackendDeviceResponse): DeviceRecord => ({
 })
 
 export const deviceService = {
+  list: async () => {
+    if (env.useMocks) {
+      return mockDevices
+    }
+
+    const { data } = await http.get<BackendDeviceResponse[]>('/api/v1/devices')
+    return data.map(mapDevice)
+  },
   bind: async (payload: DeviceBindingRequest) => {
     if (env.useMocks) {
       return {

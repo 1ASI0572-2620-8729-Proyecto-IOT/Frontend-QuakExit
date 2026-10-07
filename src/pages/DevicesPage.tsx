@@ -1,23 +1,42 @@
 import { Plus, Search, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
 
 import { deviceService } from '../services/deviceService'
 import type { DeviceRecord } from '../types/device'
 
-const initialDevices: DeviceRecord[] = [
-  { id: 'hp-1', alias: 'Puerta principal', deviceCode: 'QX-005', status: 'ONLINE', battery: 88, lockStatus: 'LOCKED', lightStatus: 'OFF', lastSeen: 'Ahora', powerMode: 'NORMAL', connected: true },
-  { id: 'hp-2', alias: 'Dormitorio principal', deviceCode: 'QX-012', status: 'SLEEPING', battery: 63, lockStatus: 'LOCKED', lightStatus: 'OFF', lastSeen: 'Hace 2 min', powerMode: 'DEEP_SLEEP', connected: true },
-  { id: 'hp-3', alias: 'Garaje', deviceCode: 'QX-029', status: 'ALERT', battery: 24, lockStatus: 'FAULT', lightStatus: 'ON', lastSeen: 'Hace 1 min', powerMode: 'NORMAL', connected: true },
-]
-
 export function DevicesPage() {
-  const [devices, setDevices] = useState(initialDevices)
+  const [devices, setDevices] = useState<DeviceRecord[]>([])
   const [search, setSearch] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [form, setForm] = useState({ deviceCode: '', macAddress: '', alias: '' })
   const visibleDevices = useMemo(() => devices.filter((device) => `${device.alias} ${device.deviceCode}`.toLowerCase().includes(search.toLowerCase())), [devices, search])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadDevices = async () => {
+      try {
+        const storedDevices = await deviceService.list()
+        if (isMounted) {
+          setDevices(storedDevices)
+        }
+      } catch (error) {
+        console.error(error)
+        if (isMounted) {
+          toast.error('No fue posible cargar tus dispositivos.')
+        }
+      }
+    }
+
+    void loadDevices()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const bindDevice = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
