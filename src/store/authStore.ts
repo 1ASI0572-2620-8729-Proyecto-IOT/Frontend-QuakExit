@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'quakexit-auth',
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => localStorage),
     },
   ),
 )
