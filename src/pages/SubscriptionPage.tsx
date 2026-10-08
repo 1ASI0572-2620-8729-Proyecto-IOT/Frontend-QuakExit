@@ -22,6 +22,16 @@ const planDescriptions: Record<PlanCode, string> = {
     "Integra múltiples edificios, analítica y soporte prioritario.",
 };
 
+const featureLabels: Record<string, string> = {
+  MANUAL_SIMULATIONS: "Simulacros de vivienda",
+  COMMON_AREA_SIMULATIONS: "Simulacros de áreas comunes",
+  PROPERTY_CONFIGURATION: "Configuración de vivienda",
+  DEVICE_STATUS: "Estado de dispositivos",
+  DEVICE_CONTROL_BASIC: "Control básico de dispositivos",
+  BUILDING_MANAGEMENT: "Gestión de edificios",
+  RESIDENT_MANAGEMENT: "Gestión de residentes",
+};
+
 const formatPrice = (price: number | null, currency: string) =>
   price === null ? "Consultar" : `${currency} ${price.toFixed(2)}`;
 
@@ -199,10 +209,10 @@ export function SubscriptionPage() {
                 {planDescriptions[plan.code]}
               </p>
               <ul className="mt-5 space-y-2 text-xs text-slate-400">
-                {plan.features.slice(0, 5).map((feature) => (
+                {plan.features.filter((feature) => featureLabels[feature]).slice(0, 5).map((feature) => (
                   <li key={feature} className="flex gap-2">
                     <Check className="h-4 w-4 shrink-0 text-success" />
-                    {feature.replaceAll("_", " ")}
+                    {featureLabels[feature]}
                   </li>
                 ))}
               </ul>
