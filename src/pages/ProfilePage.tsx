@@ -1,10 +1,13 @@
 import { Mail, ShieldCheck, UserRound } from 'lucide-react'
 
 import { useAuthStore } from '../store/authStore'
+import { useCurrentSubscription } from '../hooks/useSubscription'
 
 export function ProfilePage() {
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
+  const { data: subscriptionData, isLoading: subscriptionLoading } = useCurrentSubscription()
+  const subscription = subscriptionData?.subscription
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -23,6 +26,10 @@ export function ProfilePage() {
           <div className="rounded-xl bg-canvas p-4"><dt className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500"><UserRound className="h-4 w-4" />Identificador</dt><dd className="mt-2 text-sm text-slate-200">{user?.id ?? 'No disponible'}</dd></div>
           <div className="rounded-xl bg-canvas p-4 sm:col-span-2"><dt className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500"><ShieldCheck className="h-4 w-4" />Estado de seguridad</dt><dd className="mt-2 text-sm text-green-200">Sesión autenticada con JWT</dd></div>
         </dl>
+        <section className="mt-6 rounded-xl border border-line bg-canvas p-4">
+          <p className="flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-slate-500"><ShieldCheck className="h-4 w-4" />Suscripción</p>
+          {subscriptionLoading ? <p className="mt-2 text-sm text-slate-400">Consultando suscripción...</p> : subscription ? <div className="mt-2 text-sm text-slate-200"><p className="font-semibold">{subscription.planCode.replaceAll('_', ' ')}</p><p className="mt-1 text-slate-400">Estado: {subscription.status} · Vence: {new Date(subscription.expiresAt).toLocaleDateString('es-PE')}</p></div> : <p className="mt-2 text-sm text-slate-400">No tienes una suscripción activa.</p>}
+        </section>
         <button type="button" onClick={() => { logout(); window.location.assign('/login') }} className="mt-6 rounded-xl border border-danger/40 px-4 py-3 text-sm font-semibold text-red-200 hover:bg-danger/10">Cerrar sesión</button>
       </section>
     </div>
