@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 
 import { LottiePlaceholder } from '../../../shared/ui/LottiePlaceholder'
+import { useCurrentSubscription } from '../../../hooks/useSubscription'
+import { useAuthStore } from '../../../store/authStore'
 import { usePropertyLayout, useSavePropertyLayout, useTriggerSimulation } from '../hooks/usePropertyLayout'
 import type { PropertyCard, PropertyLayout } from '../types'
 
@@ -40,6 +42,8 @@ export function PropertySimulation() {
   const { data, isLoading, isError, refetch } = usePropertyLayout()
   const saveLayout = useSavePropertyLayout()
   const simulation = useTriggerSimulation()
+  const { data: subscription } = useCurrentSubscription()
+  const role = useAuthStore((state) => state.user?.role)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState<PropertyLayout | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -48,6 +52,7 @@ export function PropertySimulation() {
   const [showSummary, setShowSummary] = useState(false)
   const [simulationTarget, setSimulationTarget] = useState<'PRIVATE_HOME' | 'COMMON_AREAS'>('PRIVATE_HOME')
   const [simulationResults, setSimulationResults] = useState<Array<{ device_id: number; success: boolean; error_message: string | null }>>([])
+  const canSimulateCommonAreas = role === 'SYSTEM_ADMIN' || subscription?.features.includes('COMMON_AREA_SIMULATIONS') === true
   const audioContextRef = useRef<AudioContext | null>(null)
   const alarmIntervalRef = useRef<number | null>(null)
 
@@ -121,6 +126,12 @@ export function PropertySimulation() {
       setSecondsLeft(response.duration_seconds)
       startAlarm()
     }
+
+    useEffect(() => {
+      if (!canSimulateCommonAreas && simulationTarget === 'COMMON_AREAS') {
+        setSimulationTarget('PRIVATE_HOME')
+      }
+    }, [canSimulateCommonAreas, simulationTarget])
   }
 
   const startAlarm = () => {
@@ -159,7 +170,7 @@ export function PropertySimulation() {
       <div><p className="text-xs uppercase tracking-[0.22em] text-amber">Configuración del hogar</p><h2 id="property-title" className="mt-1 text-xl font-semibold text-white">Niveles y dispositivos</h2></div>
       <div className="flex items-center gap-2">
         {evacuating && <span className="inline-flex items-center gap-2 rounded-full bg-danger/15 px-3 py-2 text-sm font-semibold text-red-200"><TimerReset className="h-4 w-4" />{secondsLeft}s</span>}
-        {!editing && !evacuating && <label className="flex items-center gap-2 text-xs text-slate-400">Destino<select value={simulationTarget} onChange={(event) => setSimulationTarget(event.target.value as typeof simulationTarget)} className="rounded-lg border border-line bg-panel px-2 py-2 text-sm text-white"><option value="PRIVATE_HOME">Mi vivienda</option><option value="COMMON_AREAS">Áreas comunes</option></select></label>}
+        {!editing && !evacuating && <label className="flex items-center gap-2 text-xs text-slate-400">Destino<select value={simulationTarget} onChange={(event) => setSimulationTarget(event.target.value as typeof simulationTarget)} className="rounded-lg border border-line bg-panel px-2 py-2 text-sm text-white"><option value="PRIVATE_HOME">Mi vivienda</option>{canSimulateCommonAreas && <option value="COMMON_AREAS">Áreas comunes</option>}</select></label>}
         {editing ? <><button type="button" onClick={() => setEditing(false)} className="rounded-xl border border-line p-2 text-slate-300" aria-label="Cancelar edición"><X className="h-4 w-4" /></button><button type="button" onClick={save} disabled={saveLayout.isPending} className="inline-flex items-center gap-2 rounded-xl bg-success px-3 py-2 text-sm font-semibold text-slate-950"><Save className="h-4 w-4" />Guardar</button></> : <button type="button" onClick={startEditing} className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm text-slate-300 hover:bg-panelMuted"><Edit3 className="h-4 w-4" />Editar</button>}
       </div>
     </div>
