@@ -10,6 +10,7 @@ import {
   type PlanCode,
   type SubscriptionPlan,
 } from "../services/subscriptionService";
+import { useCurrentSubscription } from "../hooks/useSubscription";
 import { useAuthStore } from "../store/authStore";
 
 const planDescriptions: Record<PlanCode, string> = {
@@ -28,6 +29,8 @@ export function SubscriptionPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const currentQuery = useCurrentSubscription();
+  const renewalKey = user ? `quakexit-renewal-${user.id}` : null;
   const {
     data: plans = [],
     isLoading,
@@ -40,6 +43,8 @@ export function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanCode>("CLOUD_ESSENTIAL");
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("MONTHLY");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showRenew, setShowRenew] = useState(() => Boolean(renewalKey && localStorage.getItem(renewalKey)));
+  const current = currentQuery.data?.subscription;
 
   const subscribe = async (plan: SubscriptionPlan) => {
     if (!user) return;
@@ -77,6 +82,39 @@ export function SubscriptionPage() {
     }
   };
 
+  const cancel = async () => {
+    setIsSubmitting(true);
+    try {
+      await subscriptionService.cancel();
+      await queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      if (renewalKey) localStorage.setItem(renewalKey, "true");
+      setShowRenew(true);
+      toast.success("Suscripción cancelada");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo cancelar la suscripción");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const renew = async () => {
+    setIsSubmitting(true);
+    try {
+      const checkout = await subscriptionService.renew();
+      await subscriptionService.simulatePayment(checkout.orderId);
+      await queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      if (renewalKey) localStorage.removeItem(renewalKey);
+      setShowRenew(false);
+      toast.success("Suscripción renovada correctamente");
+    } catch (error) {
+      console.error(error);
+      toast.error("No se pudo renovar la suscripción");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (isLoading)
     return (
       <div className="rounded-3xl border border-line bg-panel p-8 text-slate-300">
@@ -107,6 +145,19 @@ export function SubscriptionPage() {
           utilizar todas las funciones de tu cuenta.
         </p>
       </div>
+
+      {current && (
+        <section className="mx-auto max-w-xl rounded-2xl border border-success/30 bg-success/5 p-5">
+          <p className="text-xs uppercase tracking-[0.2em] text-success">Suscripción actual</p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-white">{current.planCode.replaceAll("_", " ")}</h2>
+              <p className="text-sm text-slate-400">Estado: {current.status} · Vence: {new Date(current.expiresAt).toLocaleDateString("es-PE")}</p>
+            </div>
+            <button type="button" disabled={isSubmitting} onClick={() => void cancel()} className="rounded-xl border border-danger/40 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-danger/10 disabled:opacity-50">Cancelar</button>
+          </div>
+        </section>
+      )}
 
       <div className="mx-auto flex w-fit rounded-xl border border-line bg-panel p-1">
         {(["MONTHLY", "ANNUAL"] as const).map((period) => (
@@ -185,6 +236,13 @@ export function SubscriptionPage() {
                 ? "Contactar ventas"
                 : "Activar suscripción"}
           </button>
+        </section>
+      )}
+
+      {showRenew && currentQuery.isSuccess && !current && (
+        <section className="mx-auto max-w-xl rounded-2xl border border-line bg-panel p-5">
+          <p className="text-sm text-slate-400">Si tu suscripción anterior expiró o fue cancelada, puedes renovarla desde aquí.</p>
+          <button type="button" disabled={isSubmitting} onClick={() => void renew()} className="mt-4 w-full rounded-xl border border-amber px-4 py-3 font-semibold text-amber disabled:opacity-50">Renovar última suscripción</button>
         </section>
       )}
     </div>
