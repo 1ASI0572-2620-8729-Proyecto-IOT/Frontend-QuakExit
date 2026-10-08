@@ -5,10 +5,10 @@ export type EarthquakeEvent = {
   deviceCode: string
   status: EventStatus
   severity: Severity
-  maxAcceleration: number
+  peakAcceleration: number
   detectedAt: string
   resolvedAt?: string | null
-  smsSent: number
+  smsNotificationsSent: number
   reason?: string
 }
 
