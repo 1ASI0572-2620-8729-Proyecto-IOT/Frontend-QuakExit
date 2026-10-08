@@ -1,4 +1,4 @@
-import { Activity, BellRing, CircleUserRound, CreditCard, LayoutDashboard, Menu, ShieldAlert, Smartphone, X } from 'lucide-react'
+import { Activity, BellRing, CircleUserRound, CreditCard, LayoutDashboard, Menu, Settings, ShieldAlert, Smartphone, X } from 'lucide-react'
 import { ClipboardList } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
@@ -53,6 +53,7 @@ export function AppLayout() {
           {label}
         </NavLink>
       ))}
+      {user?.role === 'SYSTEM_ADMIN' && <NavLink to="/system-admin" onClick={closeMenu} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${isActive ? 'bg-amber text-slate-950' : 'text-slate-300 hover:bg-panelMuted hover:text-white'}`}><Settings className="h-4 w-4" />Configuración del sistema</NavLink>}
       {(user?.role === 'BUILDING_ADMIN' || user?.role === 'B2B_ADMIN' || user?.role === 'SYSTEM_ADMIN') && (
         <NavLink
           to="/building-admin"

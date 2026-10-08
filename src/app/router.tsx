@@ -15,6 +15,7 @@ import { BuildingAdminPage } from '../pages/BuildingAdminPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { SimulationPage } from '../pages/SimulationPage'
 import { SubscriptionPage } from '../pages/SubscriptionPage'
+import { SystemAdminPage } from '../pages/SystemAdminPage'
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
       { path: 'simulation', element: <SimulationPage /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'subscription', element: <SubscriptionPage /> },
+      { path: 'system-admin', element: <RoleRoute allowedRoles={['SYSTEM_ADMIN']}><SystemAdminPage /></RoleRoute> },
       { path: 'devices', element: <DevicesPage /> },
       { path: 'devices/:id', element: <DeviceDetailPage /> },
       {
