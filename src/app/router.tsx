@@ -14,6 +14,7 @@ import { NotFoundPage } from '../pages/NotFoundPage'
 import { BuildingAdminPage } from '../pages/BuildingAdminPage'
 import { ProfilePage } from '../pages/ProfilePage'
 import { SimulationPage } from '../pages/SimulationPage'
+import { SubscriptionPage } from '../pages/SubscriptionPage'
 
 export const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'simulation', element: <SimulationPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'subscription', element: <SubscriptionPage /> },
       { path: 'devices', element: <DevicesPage /> },
       { path: 'devices/:id', element: <DeviceDetailPage /> },
       {
