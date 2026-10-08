@@ -1,8 +1,9 @@
-import { Activity, BellRing, CircleUserRound, LayoutDashboard, Menu, ShieldAlert, Smartphone, X } from 'lucide-react'
+import { Activity, BellRing, CircleUserRound, CreditCard, LayoutDashboard, Menu, ShieldAlert, Smartphone, X } from 'lucide-react'
 import { ClipboardList } from 'lucide-react'
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 
+import { useCurrentSubscription } from '../hooks/useSubscription'
 import { useAuthStore } from '../store/authStore'
 
 const navItems = [
@@ -10,15 +11,26 @@ const navItems = [
   { to: '/devices', label: 'Dispositivos', icon: Smartphone },
   { to: '/simulation', label: 'Simulacro', icon: Activity },
   { to: '/profile', label: 'Mi perfil', icon: CircleUserRound },
+  { to: '/subscription', label: 'Suscripción', icon: CreditCard },
   { to: '/emergencies', label: 'Emergencias', icon: ShieldAlert },
   { to: '/operations', label: 'Operaciones', icon: ClipboardList },
 ]
 
 export function AppLayout() {
   const user = useAuthStore((state) => state.user)
+  const location = useLocation()
+  const subscription = useCurrentSubscription()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   const closeMenu = () => setIsMenuOpen(false)
+
+  if (location.pathname !== '/subscription' && user?.role !== 'SYSTEM_ADMIN' && subscription.isLoading) {
+    return <div className="flex min-h-screen items-center justify-center bg-canvas text-slate-300">Verificando tu suscripción...</div>
+  }
+
+  if (location.pathname !== '/subscription' && user?.role !== 'SYSTEM_ADMIN' && subscription.isSuccess && !subscription.data.subscription) {
+    return <Navigate to="/subscription" replace />
+  }
 
   const navigation = (
     <nav className="space-y-2" aria-label="Navegación principal">
