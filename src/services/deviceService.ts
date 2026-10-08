@@ -17,6 +17,7 @@ const mockDevices: DeviceRecord[] = [
 
 const mapDevice = (device: BackendDeviceResponse): DeviceRecord => ({
   ...device,
+  id: String(device.id),
   battery: device.batteryPercentage,
   lastSeen: device.lastSeenAt,
 })
