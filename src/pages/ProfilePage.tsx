@@ -88,7 +88,7 @@ export function ProfilePage() {
             <div className="mt-2 text-sm text-slate-200">
               <p className="font-semibold">Administrador del sistema</p>
               <p className="mt-1 text-slate-400">
-                Estado: Activo · Vence: Nunca
+                Estado: ACTIVE · Vence: Nunca
               </p>
             </div>
           ) : (
