@@ -10,16 +10,44 @@ import { z } from 'zod'
 import { authService } from '../services/authService'
 import { useAuthStore } from '../store/authStore'
 import { ApiError } from '../types/api-error'
-import type { RegisterRequest } from '../types/auth'
 
 const draftKey = 'quakexit-registration-draft'
+
+const phoneCodes = [
+  ['+51', 'Perú'],
+  ['+54', 'Argentina'],
+  ['+55', 'Brasil'],
+  ['+56', 'Chile'],
+  ['+57', 'Colombia'],
+  ['+58', 'Venezuela'],
+  ['+591', 'Bolivia'],
+  ['+593', 'Ecuador'],
+  ['+595', 'Paraguay'],
+  ['+598', 'Uruguay'],
+  ['+1', 'Estados Unidos / Canadá'],
+  ['+52', 'México'],
+  ['+34', 'España'],
+  ['+33', 'Francia'],
+  ['+39', 'Italia'],
+  ['+44', 'Reino Unido'],
+  ['+49', 'Alemania'],
+  ['+351', 'Portugal'],
+  ['+7', 'Rusia / Kazajistán'],
+  ['+81', 'Japón'],
+  ['+82', 'Corea del Sur'],
+  ['+86', 'China'],
+  ['+91', 'India'],
+  ['+61', 'Australia'],
+  ['+64', 'Nueva Zelanda'],
+] as const
 
 const registrationSchema = z.object({
   propertyType: z.enum(['HOUSE', 'APARTMENT']),
   role: z.enum(['OWNER', 'RENTER', 'BUILDING_ADMIN']),
   fullName: z.string().trim().min(2, 'Ingresa tu nombre completo'),
   email: z.string().trim().email('Ingresa un correo válido'),
-  phoneNumber: z.string().trim().regex(/^\+[1-9]\d{7,14}$/, 'Usa formato internacional, por ejemplo +51987654321'),
+  phoneCode: z.string().min(1, 'Selecciona un código telefónico'),
+  phoneNumber: z.string().trim().regex(/^\d{6,14}$/, 'Ingresa entre 6 y 14 dígitos'),
   password: z
     .string()
     .min(8, 'Usa al menos 8 caracteres')
@@ -34,6 +62,7 @@ const defaultValues: RegistrationForm = {
   role: 'OWNER',
   fullName: '',
   email: '',
+  phoneCode: '+51',
   phoneNumber: '',
   password: '',
 }
@@ -51,7 +80,7 @@ const loadDraft = (): RegistrationForm => {
 const stepFields: Array<Array<keyof RegistrationForm>> = [
   ['propertyType'],
   ['role'],
-  ['fullName', 'email', 'phoneNumber', 'password'],
+  ['fullName', 'email', 'phoneCode', 'phoneNumber', 'password'],
 ]
 
 const stepLabels = ['Propiedad', 'Rol', 'Cuenta']
@@ -83,7 +112,11 @@ export function RegisterPage() {
 
   const onSubmit = async (form: RegistrationForm) => {
     try {
-      const response = await authService.register(form as RegisterRequest)
+      const { phoneCode, ...registrationData } = form
+      const response = await authService.register({
+        ...registrationData,
+        phoneNumber: `${phoneCode}${form.phoneNumber}`,
+      })
       useAuthStore.getState().setSession(response.token, response.user, true, response.refreshToken)
       sessionStorage.removeItem(draftKey)
       toast.success('Cuenta creada correctamente')
@@ -184,8 +217,13 @@ export function RegisterPage() {
                 {errors.email && <span className="mt-1 block text-xs text-red-300">{errors.email.message}</span>}
               </label>
               <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">Teléfono internacional</span>
-                <input type="tel" placeholder="+51987654321" {...register('phoneNumber')} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.phoneNumber)} />
+                <span className="mb-2 block text-sm text-slate-300">Teléfono</span>
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2">
+                  <select {...register('phoneCode')} className="rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-label="Código telefónico">
+                    {phoneCodes.map(([code, country]) => <option key={code} value={code}>{code} ({country})</option>)}
+                  </select>
+                  <input type="tel" inputMode="numeric" placeholder="987654321" {...register('phoneNumber', { setValueAs: (value: string) => value.replace(/\D/g, '') })} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.phoneNumber)} />
+                </div>
                 {errors.phoneNumber && <span className="mt-1 block text-xs text-red-300">{errors.phoneNumber.message}</span>}
               </label>
               <label className="block">
