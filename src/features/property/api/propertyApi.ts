@@ -20,7 +20,7 @@ export async function getPropertyLayout() {
     return normalizeLayout(data)
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
-      return savePropertyLayout(mockLayout)
+      return null
     }
     throw error
   }
