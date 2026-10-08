@@ -85,4 +85,12 @@ export const subscriptionService = {
     })
     return data
   },
+  cancel: async () => {
+    const { data } = await http.post<{ subscriptionId: string; status: SubscriptionStatus; cancelledAt: string }>('/api/v1/subscriptions/cancel')
+    return data
+  },
+  renew: async () => {
+    const { data } = await http.post<CheckoutResponse>('/api/v1/subscriptions/renew')
+    return data
+  },
 }
