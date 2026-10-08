@@ -9,6 +9,7 @@ import { usePropertyLayout, useSavePropertyLayout, useTriggerSimulation } from '
 import type { PropertyCard, PropertyLayout } from '../types'
 
 const cloneLayout = (layout: PropertyLayout): PropertyLayout => ({ levels: layout.levels.map((level) => ({ ...level, cards: level.cards.map((card) => ({ ...card })) })) })
+const emptyLayout: PropertyLayout = { levels: [{ id: 'new-level', floor: 1, name: 'Piso 1', cards: [] }] }
 
 type DeviceCardProps = {
   card: PropertyCard
@@ -72,6 +73,12 @@ export function PropertySimulation() {
     return () => window.clearInterval(timer)
   }, [simulationRunning])
 
+  useEffect(() => {
+    if (!canSimulateCommonAreas && simulationTarget === 'COMMON_AREAS') {
+      setSimulationTarget('PRIVATE_HOME')
+    }
+  }, [canSimulateCommonAreas, simulationTarget])
+
   useEffect(() => () => {
     if (alarmIntervalRef.current !== null) {
       window.clearInterval(alarmIntervalRef.current)
@@ -81,10 +88,8 @@ export function PropertySimulation() {
 
   const layout = editing ? draft : data
   const startEditing = () => {
-    if (data) {
-      setDraft(cloneLayout(data))
-      setEditing(true)
-    }
+    setDraft(cloneLayout(data ?? emptyLayout))
+    setEditing(true)
   }
   const updateLevel = (levelId: string, name: string) => setDraft((current) => current ? { levels: current.levels.map((level) => level.id === levelId ? { ...level, name } : level) } : current)
   const updateLevelFloor = (levelId: string, floor: number) => setDraft((current) => current ? { levels: current.levels.map((level) => level.id === levelId ? { ...level, floor } : level) } : current)
@@ -115,6 +120,7 @@ export function PropertySimulation() {
       setEditing(false)
     }
   }
+
   const startSimulation = async () => {
     if (!audioContextRef.current) audioContextRef.current = new AudioContext()
     await audioContextRef.current.resume()
@@ -126,12 +132,6 @@ export function PropertySimulation() {
       setSecondsLeft(response.duration_seconds)
       startAlarm()
     }
-
-    useEffect(() => {
-      if (!canSimulateCommonAreas && simulationTarget === 'COMMON_AREAS') {
-        setSimulationTarget('PRIVATE_HOME')
-      }
-    }, [canSimulateCommonAreas, simulationTarget])
   }
 
   const startAlarm = () => {
@@ -162,7 +162,8 @@ export function PropertySimulation() {
   }
 
   if (isLoading) return <section className="h-64 animate-pulse rounded-2xl bg-panelMuted" aria-label="Cargando configuración del hogar" />
-  if (isError || !layout) return <section className="rounded-2xl border border-danger/40 bg-danger/10 p-6"><p className="text-sm text-red-200">No pudimos cargar la configuración del hogar.</p><button type="button" onClick={() => refetch()} className="mt-3 rounded-lg bg-danger px-3 py-2 text-sm text-white">Reintentar</button></section>
+  if (isError) return <section className="rounded-2xl border border-danger/40 bg-danger/10 p-6"><p className="text-sm text-red-200">No pudimos cargar la configuración del hogar.</p><button type="button" onClick={() => refetch()} className="mt-3 rounded-lg bg-danger px-3 py-2 text-sm text-white">Reintentar</button></section>
+  if (!layout) return <section className="rounded-2xl border border-line bg-panel p-6"><p className="text-sm text-slate-300">Todavía no tienes un layout configurado.</p><p className="mt-1 text-sm text-slate-400">Crea la estructura de tu vivienda para poder preparar simulacros.</p><button type="button" onClick={startEditing} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber px-4 py-2.5 text-sm font-semibold text-slate-950"><Plus className="h-4 w-4" />Crear mi layout</button></section>
 
   const evacuating = simulationRunning && secondsLeft > 0
   return <section id="simulation" className="space-y-4 rounded-[28px] border border-line bg-panel p-5" aria-labelledby="property-title">
