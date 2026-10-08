@@ -24,11 +24,13 @@ export function AppLayout() {
 
   const closeMenu = () => setIsMenuOpen(false)
 
-  if (location.pathname !== '/subscription' && user?.role !== 'SYSTEM_ADMIN' && subscription.isLoading) {
+  const canAccessWithoutSubscription = location.pathname === '/subscription' || location.pathname === '/profile'
+
+  if (!canAccessWithoutSubscription && user?.role !== 'SYSTEM_ADMIN' && subscription.isLoading) {
     return <div className="flex min-h-screen items-center justify-center bg-canvas text-slate-300">Verificando tu suscripción...</div>
   }
 
-  if (location.pathname !== '/subscription' && user?.role !== 'SYSTEM_ADMIN' && subscription.isSuccess && !subscription.data.subscription) {
+  if (!canAccessWithoutSubscription && user?.role !== 'SYSTEM_ADMIN' && subscription.isSuccess && !subscription.data.subscription) {
     return <Navigate to="/subscription" replace />
   }
 
