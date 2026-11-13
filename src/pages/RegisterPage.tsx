@@ -7,6 +7,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
+import { useI18n } from '../i18n/I18nProvider'
+import type { TranslationDictionary } from '../i18n/translations'
 import { authService } from '../services/authService'
 import { useAuthStore } from '../store/authStore'
 import { ApiError } from '../types/api-error'
@@ -55,6 +57,21 @@ const registrationSchema = z.object({
     .regex(/\d/, 'Incluye al menos un número'),
 })
 
+const buildRegistrationSchema = (t: (key: keyof TranslationDictionary) => string) =>
+  z.object({
+    propertyType: z.enum(['HOUSE', 'APARTMENT']),
+    role: z.enum(['OWNER', 'RENTER', 'BUILDING_ADMIN']),
+    fullName: z.string().trim().min(2, t('fullNameRequired')),
+    email: z.string().trim().email(t('notValidEmail')),
+    phoneCode: z.string().min(1, t('phoneRequired')),
+    phoneNumber: z.string().trim().regex(/^\d{6,14}$/, t('invalidPhone')),
+    password: z
+      .string()
+      .min(8, t('passwordMinLength'))
+      .regex(/[A-Z]/, t('passwordUppercase'))
+      .regex(/\d/, t('passwordNumber')),
+  })
+
 type RegistrationForm = z.infer<typeof registrationSchema>
 
 const defaultValues: RegistrationForm = {
@@ -83,14 +100,14 @@ const stepFields: Array<Array<keyof RegistrationForm>> = [
   ['fullName', 'email', 'phoneCode', 'phoneNumber', 'password'],
 ]
 
-const stepLabels = ['Propiedad', 'Rol', 'Cuenta']
-
 export function RegisterPage() {
   const navigate = useNavigate()
+  const { locale, setLocale, t } = useI18n()
   const [step, setStep] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
+  const stepLabels = [t('stepProperty'), t('stepRole'), t('stepAccount')]
   const { register, handleSubmit, trigger, watch, setError, formState: { errors, isSubmitting } } = useForm<RegistrationForm>({
-    resolver: zodResolver(registrationSchema),
+    resolver: zodResolver(buildRegistrationSchema(t)),
     defaultValues: loadDraft(),
     mode: 'onTouched',
   })
@@ -119,7 +136,7 @@ export function RegisterPage() {
       })
       useAuthStore.getState().setSession(response.token, response.user, true, response.refreshToken)
       sessionStorage.removeItem(draftKey)
-      toast.success('Cuenta creada correctamente')
+      toast.success(t('accountCreated'))
       navigate('/dashboard')
     } catch (error) {
       if (error instanceof ApiError) {
@@ -129,7 +146,7 @@ export function RegisterPage() {
         toast.error(error.message)
         return
       }
-      toast.error('La cuenta no pudo crearse. Intenta nuevamente.')
+      toast.error(t('accountCreationError'))
     }
   }
 
@@ -138,10 +155,33 @@ export function RegisterPage() {
       <section className="w-full max-w-2xl rounded-3xl border border-line bg-panel p-6 shadow-2xl md:p-10" aria-labelledby="register-title">
         <div className="mb-8 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.28em] text-amber">Registro seguro</p>
-            <h1 id="register-title" className="mt-2 text-3xl font-semibold text-white">Crea tu cuenta QuakExit</h1>
-            <p className="mt-2 text-sm text-slate-400">Configura tu experiencia de evacuación en pocos pasos.</p>
+            <p className="text-xs uppercase tracking-[0.28em] text-amber">{t('secureRegistration')}</p>
+            <h1 id="register-title" className="mt-2 text-3xl font-semibold text-white">{t('registerTitle')}</h1>
+            <p className="mt-2 text-sm text-slate-400">{t('registerSubtitle')}</p>
           </div>
+
+          <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 p-1">
+            <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+              {t('languageLabel')}
+            </span>
+            <button
+              type="button"
+              onClick={() => setLocale('es')}
+              className={`rounded-full px-2 py-1 text-xs font-medium transition ${locale === 'es' ? 'bg-amber text-slate-950' : 'text-slate-300'}`}
+              aria-label="Cambiar a español"
+            >
+              {t('languageEs')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocale('en')}
+              className={`rounded-full px-2 py-1 text-xs font-medium transition ${locale === 'en' ? 'bg-amber text-slate-950' : 'text-slate-300'}`}
+              aria-label="Switch to English"
+            >
+              {t('languageEn')}
+            </button>
+          </div>
+
           <ShieldCheck className="h-7 w-7 shrink-0 text-success" aria-label="Registro protegido" />
         </div>
 
@@ -167,90 +207,127 @@ export function RegisterPage() {
             >
               {step === 0 && (
                 <fieldset className="space-y-5">
-              <legend className="text-xl font-semibold text-white">¿Qué vas a registrar?</legend>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {([
-                  ['HOUSE', 'Casa', 'Controla puertas y dispositivos de tu casa.'],
-                  ['APARTMENT', 'Departamento', 'Configura tu espacio dentro de un edificio.'],
-                ] as const).map(([value, label, description]) => (
-                  <label key={value} className={`cursor-pointer rounded-2xl border p-5 transition ${values.propertyType === value ? 'border-amber bg-amber/10' : 'border-line bg-canvas hover:border-slate-500'}`}>
-                    <input type="radio" value={value} {...register('propertyType')} className="sr-only" />
-                    <Home className="mb-5 h-7 w-7 text-amber" aria-hidden="true" />
-                    <span className="block font-semibold text-white">{label}</span>
-                    <span className="mt-2 block text-sm text-slate-400">{description}</span>
-                  </label>
-                ))}
-              </div>
+                  <legend className="text-xl font-semibold text-white">{t('whatRegister')}</legend>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {([
+                      ['HOUSE', t('propertyHouse'), t('propertyHouseDescription')],
+                      ['APARTMENT', t('propertyApartment'), t('propertyApartmentDescription')],
+                    ] as const).map(([value, label, description]) => (
+                      <label key={value} className={`cursor-pointer rounded-2xl border p-5 transition ${values.propertyType === value ? 'border-amber bg-amber/10' : 'border-line bg-canvas hover:border-slate-500'}`}>
+                        <input type="radio" value={value} {...register('propertyType')} className="sr-only" />
+                        <Home className="mb-5 h-7 w-7 text-amber" aria-hidden="true" />
+                        <span className="block font-semibold text-white">{label}</span>
+                        <span className="mt-2 block text-sm text-slate-400">{description}</span>
+                      </label>
+                    ))}
+                  </div>
                 </fieldset>
               )}
 
               {step === 1 && (
                 <fieldset className="space-y-5">
-              <legend className="text-xl font-semibold text-white">¿Cuál es tu rol?</legend>
-              <div className="space-y-3">
-                {([
-                  ['OWNER', 'Propietario'],
-                  ['RENTER', 'Inquilino'],
-                  ['BUILDING_ADMIN', 'Administrador de Torre'],
-                ] as const).map(([value, label]) => (
-                  <label key={value} className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition ${values.role === value ? 'border-amber bg-amber/10' : 'border-line bg-canvas hover:border-slate-500'}`}>
-                    <input type="radio" value={value} {...register('role')} className="accent-amber" />
-                    <UserRound className="h-5 w-5 text-slate-300" aria-hidden="true" />
-                    <span className="font-medium text-white">{label}</span>
-                  </label>
-                ))}
-              </div>
+                  <legend className="text-xl font-semibold text-white">{t('stepRole')}</legend>
+                  <div className="space-y-3">
+                    {([
+                      ['OWNER', t('roleOwner')],
+                      ['RENTER', t('roleRenter')],
+                      ['BUILDING_ADMIN', t('roleBuildingAdmin')],
+                    ] as const).map(([value, label]) => (
+                      <label key={value} className={`flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition ${values.role === value ? 'border-amber bg-amber/10' : 'border-line bg-canvas hover:border-slate-500'}`}>
+                        <input type="radio" value={value} {...register('role')} className="accent-amber" />
+                        <UserRound className="h-5 w-5 text-slate-300" aria-hidden="true" />
+                        <span className="font-medium text-white">{label}</span>
+                      </label>
+                    ))}
+                  </div>
                 </fieldset>
               )}
 
               {step === 2 && (
                 <fieldset className="space-y-5">
-              <legend className="text-xl font-semibold text-white">Datos de tu cuenta</legend>
-              <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">Nombre completo</span>
-                <input {...register('fullName')} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.fullName)} />
-                {errors.fullName && <span className="mt-1 block text-xs text-red-300">{errors.fullName.message}</span>}
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">Correo</span>
-                <input type="email" {...register('email')} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.email)} />
-                {errors.email && <span className="mt-1 block text-xs text-red-300">{errors.email.message}</span>}
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">Teléfono</span>
-                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2">
-                  <select {...register('phoneCode')} className="rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-label="Código telefónico">
-                    {phoneCodes.map(([code, country]) => <option key={code} value={code}>{code} ({country})</option>)}
-                  </select>
-                  <input type="tel" inputMode="numeric" placeholder="987654321" {...register('phoneNumber', { setValueAs: (value: string) => value.replace(/\D/g, '') })} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.phoneNumber)} />
-                </div>
-                {errors.phoneNumber && <span className="mt-1 block text-xs text-red-300">{errors.phoneNumber.message}</span>}
-              </label>
-              <label className="block">
-                <span className="mb-2 block text-sm text-slate-300">Contraseña</span>
-                <div className="relative">
-                  <input type={showPassword ? 'text' : 'password'} {...register('password')} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 pr-12 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.password)} />
-                  <button type="button" onClick={() => setShowPassword((current) => !current)} className="absolute inset-y-0 right-3 text-slate-400" aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
-                    {showPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
-                  </button>
-                </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-canvas" aria-label={`Fortaleza de contraseña: ${passwordStrength} de 3`}>
-                  <div className={`h-full transition-all ${passwordStrength === 3 ? 'bg-success' : passwordStrength === 2 ? 'bg-warning' : 'bg-danger'}`} style={{ width: `${(passwordStrength / 3) * 100}%` }} />
-                </div>
-                {errors.password && <span className="mt-1 block text-xs text-red-300">{errors.password.message}</span>}
-              </label>
+                  <legend className="text-xl font-semibold text-white">{t('accountData')}</legend>
+                  <label className="block">
+                    <span className="mb-2 block text-sm text-slate-300">{t('fullName')}</span>
+                    <input {...register('fullName')} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.fullName)} />
+                    {errors.fullName && <span className="mt-1 block text-xs text-red-300">{errors.fullName.message}</span>}
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm text-slate-300">{t('email')}</span>
+                    <input type="email" {...register('email')} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.email)} />
+                    {errors.email && <span className="mt-1 block text-xs text-red-300">{errors.email.message}</span>}
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm text-slate-300">{t('phone')}</span>
+                    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-2">
+                      <select {...register('phoneCode')} className="rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none" aria-label={t('phoneCountry')}>
+                        {phoneCodes.map(([code, country]) => (
+                          <option key={code} value={code}>
+                            {code} ({country})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="987654321"
+                        {...register('phoneNumber', { setValueAs: (value: string) => value.replace(/\D/g, '') })}
+                        className="w-full rounded-xl border border-line bg-canvas px-3 py-3 text-white focus:border-amber focus:outline-none"
+                        aria-invalid={Boolean(errors.phoneNumber)}
+                      />
+                    </div>
+                    {errors.phoneNumber && <span className="mt-1 block text-xs text-red-300">{errors.phoneNumber.message}</span>}
+                  </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm text-slate-300">{t('password')}</span>
+                    <div className="relative">
+                      <input type={showPassword ? 'text' : 'password'} {...register('password')} className="w-full rounded-xl border border-line bg-canvas px-3 py-3 pr-12 text-white focus:border-amber focus:outline-none" aria-invalid={Boolean(errors.password)} />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((current) => !current)}
+                        className="absolute inset-y-0 right-3 text-slate-400"
+                        aria-label={showPassword ? t('hidePassword') : t('showPasswordToggle')}
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
+                      </button>
+                    </div>
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-canvas" aria-label={`${t('passwordStrength')}: ${passwordStrength} de 3`}>
+                      <div className={`h-full transition-all ${passwordStrength === 3 ? 'bg-success' : passwordStrength === 2 ? 'bg-warning' : 'bg-danger'}`} style={{ width: `${(passwordStrength / 3) * 100}%` }} />
+                    </div>
+                    {errors.password && <span className="mt-1 block text-xs text-red-300">{errors.password.message}</span>}
+                  </label>
                 </fieldset>
               )}
             </motion.div>
           </AnimatePresence>
 
           <div className="mt-8 flex items-center justify-between gap-3">
-            {step > 0 ? <button type="button" onClick={() => setStep((current) => current - 1)} className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-3 text-sm text-slate-300 hover:bg-panelMuted"><ArrowLeft className="h-4 w-4" aria-hidden="true" />Atrás</button> : <span />}
-            {step < 2 ? <button type="button" onClick={goNext} className="inline-flex items-center gap-2 rounded-xl bg-amber px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber/90">Continuar<ArrowRight className="h-4 w-4" aria-hidden="true" /></button> : <button type="submit" disabled={isSubmitting} className="rounded-xl bg-amber px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber/90 disabled:cursor-not-allowed disabled:opacity-60">{isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}</button>}
+            {step > 0 ? (
+              <button type="button" onClick={() => setStep((current) => current - 1)} className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-3 text-sm text-slate-300 hover:bg-panelMuted">
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                {t('back')}
+              </button>
+            ) : (
+              <span />
+            )}
+            {step < 2 ? (
+              <button type="button" onClick={goNext} className="inline-flex items-center gap-2 rounded-xl bg-amber px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber/90">
+                {t('continue')}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : (
+              <button type="submit" disabled={isSubmitting} className="rounded-xl bg-amber px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-amber/90 disabled:cursor-not-allowed disabled:opacity-60">
+                {isSubmitting ? t('creatingAccount') : t('createAccountAction')}
+              </button>
+            )}
           </div>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-400">¿Ya tienes cuenta? <Link to="/login" className="font-semibold text-amber hover:underline">Inicia sesión</Link></p>
+        <p className="mt-6 text-center text-sm text-slate-400">
+          {t('alreadyHaveAccount')}{' '}
+          <Link to="/login" className="font-semibold text-amber hover:underline">
+            {t('signIn')}
+          </Link>
+        </p>
       </section>
     </main>
   )

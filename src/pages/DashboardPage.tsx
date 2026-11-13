@@ -1,29 +1,32 @@
 import { Activity, BatteryCharging, ShieldAlert, Wifi, Zap } from 'lucide-react'
 
+import { useI18n } from '../i18n/I18nProvider'
 import { HomeTwin } from '../features/home-twin/HomeTwin'
 import { EarthquakeDashboard } from '../features/earthquakes/components/EarthquakeDashboard'
 import { ResidentSafetyPanel } from '../features/devices/components/ResidentSafetyPanel'
 import { useAuthStore } from '../store/authStore'
 
-const stats = [
-  { label: 'Estado del sistema', value: 'Normal', tone: 'text-success' },
-  { label: 'Dispositivos en línea', value: '4/5', tone: 'text-info' },
-  { label: 'Batería mínima', value: '72%', tone: 'text-warning' },
-  { label: 'Alertas activas', value: '1', tone: 'text-danger' },
-  { label: 'Última conexión', value: '18s', tone: 'text-slate-700' },
-]
-
-const services = [
-  { name: 'Cerraduras', status: 'Conectado', latency: '18 ms' },
-  { name: 'Luces', status: 'OK', latency: '24 ms' },
-  { name: 'Acelerómetro', status: 'Monitoreando', latency: '11 ms' },
-  { name: 'Batería', status: '72%', latency: '42 ms' },
-  { name: 'Conectividad', status: 'Wi-Fi', latency: '19 ms' },
-]
-
 export function DashboardPage() {
   const role = useAuthStore((state) => state.user?.role)
+  const { locale } = useI18n()
+  const isEnglish = locale === 'en'
   const isResident = role === 'HOMEOWNER' || role === 'OWNER' || role === 'RENTER'
+
+  const stats = [
+    { label: isEnglish ? 'System status' : 'Estado del sistema', value: isEnglish ? 'Normal' : 'Normal', tone: 'text-success' },
+    { label: isEnglish ? 'Devices online' : 'Dispositivos en línea', value: '4/5', tone: 'text-info' },
+    { label: isEnglish ? 'Minimum battery' : 'Batería mínima', value: '72%', tone: 'text-warning' },
+    { label: isEnglish ? 'Active alerts' : 'Alertas activas', value: '1', tone: 'text-danger' },
+    { label: isEnglish ? 'Last connection' : 'Última conexión', value: '18s', tone: 'text-slate-700' },
+  ]
+
+  const services = [
+    { name: isEnglish ? 'Locks' : 'Cerraduras', status: isEnglish ? 'Connected' : 'Conectado', latency: '18 ms' },
+    { name: isEnglish ? 'Lights' : 'Luces', status: 'OK', latency: '24 ms' },
+    { name: isEnglish ? 'Accelerometer' : 'Acelerómetro', status: isEnglish ? 'Monitoring' : 'Monitoreando', latency: '11 ms' },
+    { name: isEnglish ? 'Battery' : 'Batería', status: '72%', latency: '42 ms' },
+    { name: isEnglish ? 'Connectivity' : 'Conectividad', status: 'Wi-Fi', latency: '19 ms' },
+  ]
 
   return (
     <div className="space-y-6">
@@ -45,11 +48,11 @@ export function DashboardPage() {
         <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-soft">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Casa</p>
-              <h2 className="text-xl font-semibold text-slate-900">Gemelo digital del hogar</h2>
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{isEnglish ? 'Home' : 'Casa'}</p>
+              <h2 className="text-xl font-semibold text-slate-900">{isEnglish ? 'Digital twin of the home' : 'Gemelo digital del hogar'}</h2>
             </div>
             <button type="button" onClick={() => window.location.assign('/simulation')} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
-              Reproducir evacuación
+              {isEnglish ? 'Play evacuation' : 'Reproducir evacuación'}
             </button>
           </div>
           <HomeTwin />
@@ -57,18 +60,18 @@ export function DashboardPage() {
 
         <aside className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-soft">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Servicios IoT</h3>
+            <h3 className="text-lg font-semibold text-slate-900">{isEnglish ? 'IoT services' : 'Servicios IoT'}</h3>
             <span className="rounded-full bg-success/10 px-2 py-1 text-xs font-medium text-success">online</span>
           </div>
           <div className="space-y-3">
             {services.map((service) => (
               <div key={service.name} className="flex items-center justify-between rounded-xl bg-slate-50 p-3">
                 <div className="flex items-center gap-3">
-                  {service.name.includes('Batería') ? (
+                  {service.name.includes('Batería') || service.name.includes('Battery') ? (
                     <BatteryCharging className="h-4 w-4 text-warning" />
-                  ) : service.name.includes('Wifi') || service.name.includes('Conectividad') ? (
+                  ) : service.name.includes('Wifi') || service.name.includes('Conectividad') || service.name.includes('Connectivity') ? (
                     <Wifi className="h-4 w-4 text-info" />
-                  ) : service.name.includes('Luces') ? (
+                  ) : service.name.includes('Luces') || service.name.includes('Lights') ? (
                     <Zap className="h-4 w-4 text-success" />
                   ) : (
                     <ShieldAlert className="h-4 w-4 text-slate-500" />

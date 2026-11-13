@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import { useI18n } from '../i18n/I18nProvider'
 import {
   subscriptionService,
   type BillingPeriod,
@@ -39,6 +40,8 @@ export function SubscriptionPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const { locale } = useI18n()
+  const isEnglish = locale === 'en'
   const currentQuery = useCurrentSubscription();
   const renewalKey = user ? `quakexit-renewal-${user.id}` : null;
   const {
@@ -60,7 +63,7 @@ export function SubscriptionPage() {
     if (!user) return;
     if (plan.code === "CLOUD_ENTERPRISE") {
       toast.info(
-        "El plan Enterprise requiere contacto con nuestro equipo comercial.",
+        isEnglish ? 'The Enterprise plan requires contacting our sales team.' : 'El plan Enterprise requiere contacto con nuestro equipo comercial.',
       );
       return;
     }
@@ -82,11 +85,11 @@ export function SubscriptionPage() {
 
       await subscriptionService.simulatePayment(checkout.orderId);
       await queryClient.invalidateQueries({ queryKey: ["subscription"] });
-      toast.success("Suscripción activada correctamente");
+      toast.success(isEnglish ? 'Subscription activated successfully' : 'Suscripción activada correctamente');
       navigate("/dashboard");
     } catch (error) {
       console.error(error);
-      toast.error("No fue posible activar la suscripción. Intenta nuevamente.");
+      toast.error(isEnglish ? 'It was not possible to activate the subscription. Please try again.' : 'No fue posible activar la suscripción. Intenta nuevamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -99,10 +102,10 @@ export function SubscriptionPage() {
       await queryClient.invalidateQueries({ queryKey: ["subscription"] });
       if (renewalKey) localStorage.setItem(renewalKey, "true");
       setShowRenew(true);
-      toast.success("Suscripción cancelada");
+      toast.success(isEnglish ? 'Subscription cancelled' : 'Suscripción cancelada');
     } catch (error) {
       console.error(error);
-      toast.error("No se pudo cancelar la suscripción");
+      toast.error(isEnglish ? 'The subscription could not be cancelled' : 'No se pudo cancelar la suscripción');
     } finally {
       setIsSubmitting(false);
     }
@@ -116,10 +119,10 @@ export function SubscriptionPage() {
       await queryClient.invalidateQueries({ queryKey: ["subscription"] });
       if (renewalKey) localStorage.removeItem(renewalKey);
       setShowRenew(false);
-      toast.success("Suscripción renovada correctamente");
+      toast.success(isEnglish ? 'Subscription renewed successfully' : 'Suscripción renovada correctamente');
     } catch (error) {
       console.error(error);
-      toast.error("No se pudo renovar la suscripción");
+      toast.error(isEnglish ? 'The subscription could not be renewed' : 'No se pudo renovar la suscripción');
     } finally {
       setIsSubmitting(false);
     }
@@ -128,13 +131,13 @@ export function SubscriptionPage() {
   if (isLoading)
     return (
       <div className="rounded-3xl border border-line bg-panel p-8 text-slate-300">
-        Cargando planes...
+        {isEnglish ? 'Loading plans...' : 'Cargando planes...'}
       </div>
     );
   if (isError)
     return (
       <div className="rounded-3xl border border-danger/40 bg-danger/10 p-8 text-red-200">
-        No se pudieron cargar los planes disponibles.
+        {isEnglish ? 'The available plans could not be loaded.' : 'No se pudieron cargar los planes disponibles.'}
       </div>
     );
 
@@ -145,26 +148,25 @@ export function SubscriptionPage() {
       <div className="text-center">
         <ShieldCheck className="mx-auto h-10 w-10 text-amber" />
         <p className="mt-4 text-xs uppercase tracking-[0.25em] text-amber">
-          Protección QuakExit
+          {isEnglish ? 'QuakExit protection' : 'Protección QuakExit'}
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-white">
-          Elige tu suscripción
+          {isEnglish ? 'Choose your subscription' : 'Elige tu suscripción'}
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-slate-400">
-          Activa un plan para registrar dispositivos, configurar tu propiedad y
-          utilizar todas las funciones de tu cuenta.
+          {isEnglish ? 'Activate a plan to register devices, configure your property and use all account features.' : 'Activa un plan para registrar dispositivos, configurar tu propiedad y utilizar todas las funciones de tu cuenta.'}
         </p>
       </div>
 
       {current && (
         <section className="mx-auto max-w-xl rounded-2xl border border-success/30 bg-success/5 p-5">
-          <p className="text-xs uppercase tracking-[0.2em] text-success">Suscripción actual</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-success">{isEnglish ? 'Current subscription' : 'Suscripción actual'}</p>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-white">{current.planCode.replaceAll("_", " ")}</h2>
-              <p className="text-sm text-slate-400">Estado: {current.status} · Vence: {new Date(current.expiresAt).toLocaleDateString("es-PE")}</p>
+              <p className="text-sm text-slate-400">{isEnglish ? 'Status' : 'Estado'}: {current.status} · {isEnglish ? 'Expires' : 'Vence'}: {new Date(current.expiresAt).toLocaleDateString(isEnglish ? 'en-US' : 'es-PE')}</p>
             </div>
-            <button type="button" disabled={isSubmitting} onClick={() => void cancel()} className="rounded-xl border border-danger/40 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-danger/10 disabled:opacity-50">Cancelar</button>
+            <button type="button" disabled={isSubmitting} onClick={() => void cancel()} className="rounded-xl border border-danger/40 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-danger/10 disabled:opacity-50">{isEnglish ? 'Cancel' : 'Cancelar'}</button>
           </div>
         </section>
       )}
@@ -177,7 +179,7 @@ export function SubscriptionPage() {
             onClick={() => setBillingPeriod(period)}
             className={`rounded-lg px-5 py-2 text-sm ${billingPeriod === period ? "bg-amber font-semibold text-slate-950" : "text-slate-300"}`}
           >
-            {period === "MONTHLY" ? "Mensual" : "Anual"}
+            {period === "MONTHLY" ? (isEnglish ? 'Monthly' : 'Mensual') : (isEnglish ? 'Annual' : 'Anual')}
           </button>
         ))}
       </div>
@@ -200,10 +202,10 @@ export function SubscriptionPage() {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 {price === null
-                  ? "Precio personalizado"
+                  ? (isEnglish ? 'Custom price' : 'Precio personalizado')
                   : billingPeriod === "MONTHLY"
-                    ? "por mes"
-                    : "por año"}
+                    ? (isEnglish ? 'per month' : 'por mes')
+                    : (isEnglish ? 'per year' : 'por año')}
               </p>
               <p className="mt-4 min-h-12 text-sm text-slate-300">
                 {planDescriptions[plan.code]}
@@ -226,7 +228,7 @@ export function SubscriptionPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Plan seleccionado
+                {isEnglish ? 'Selected plan' : 'Plan seleccionado'}
               </p>
               <h2 className="mt-1 text-xl font-semibold text-white">
                 {selected.name}
@@ -241,18 +243,18 @@ export function SubscriptionPage() {
             className="mt-6 w-full rounded-xl bg-amber px-4 py-3 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting
-              ? "Activando suscripción..."
+              ? (isEnglish ? 'Activating subscription...' : 'Activando suscripción...')
               : selected.code === "CLOUD_ENTERPRISE"
-                ? "Contactar ventas"
-                : "Activar suscripción"}
+                ? (isEnglish ? 'Contact sales' : 'Contactar ventas')
+                : (isEnglish ? 'Activate subscription' : 'Activar suscripción')}
           </button>
         </section>
       )}
 
       {showRenew && currentQuery.isSuccess && !current && (
         <section className="mx-auto max-w-xl rounded-2xl border border-line bg-panel p-5">
-          <p className="text-sm text-slate-400">Si tu suscripción anterior expiró o fue cancelada, puedes renovarla desde aquí.</p>
-          <button type="button" disabled={isSubmitting} onClick={() => void renew()} className="mt-4 w-full rounded-xl border border-amber px-4 py-3 font-semibold text-amber disabled:opacity-50">Renovar última suscripción</button>
+          <p className="text-sm text-slate-400">{isEnglish ? 'If your previous subscription expired or was cancelled, you can renew it here.' : 'Si tu suscripción anterior expiró o fue cancelada, puedes renovarla desde aquí.'}</p>
+          <button type="button" disabled={isSubmitting} onClick={() => void renew()} className="mt-4 w-full rounded-xl border border-amber px-4 py-3 font-semibold text-amber disabled:opacity-50">{isEnglish ? 'Renew last subscription' : 'Renovar última suscripción'}</button>
         </section>
       )}
     </div>

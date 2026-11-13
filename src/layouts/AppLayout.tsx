@@ -3,31 +3,34 @@ import { ClipboardList } from 'lucide-react'
 import { useState } from 'react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router-dom'
 
+import { useI18n } from '../i18n/I18nProvider'
 import { useCurrentSubscription } from '../hooks/useSubscription'
 import { useAuthStore } from '../store/authStore'
-
-const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/devices', label: 'Dispositivos', icon: Smartphone },
-  { to: '/simulation', label: 'Simulacro', icon: Activity },
-  { to: '/profile', label: 'Mi perfil', icon: CircleUserRound },
-  { to: '/subscription', label: 'Suscripción', icon: CreditCard },
-  { to: '/emergencies', label: 'Emergencias', icon: ShieldAlert },
-  { to: '/operations', label: 'Operaciones', icon: ClipboardList },
-]
 
 export function AppLayout() {
   const user = useAuthStore((state) => state.user)
   const location = useLocation()
   const subscription = useCurrentSubscription()
+  const { locale } = useI18n()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const isEnglish = locale === 'en'
+
+  const navItems = [
+    { to: '/dashboard', label: isEnglish ? 'Dashboard' : 'Panel', icon: LayoutDashboard },
+    { to: '/devices', label: isEnglish ? 'Devices' : 'Dispositivos', icon: Smartphone },
+    { to: '/simulation', label: isEnglish ? 'Simulation' : 'Simulacro', icon: Activity },
+    { to: '/profile', label: isEnglish ? 'My profile' : 'Mi perfil', icon: CircleUserRound },
+    { to: '/subscription', label: isEnglish ? 'Subscription' : 'Suscripción', icon: CreditCard },
+    { to: '/emergencies', label: isEnglish ? 'Emergencies' : 'Emergencias', icon: ShieldAlert },
+    { to: '/operations', label: isEnglish ? 'Operations' : 'Operaciones', icon: ClipboardList },
+  ]
 
   const closeMenu = () => setIsMenuOpen(false)
 
   const canAccessWithoutSubscription = location.pathname === '/subscription' || location.pathname === '/profile'
 
   if (!canAccessWithoutSubscription && user?.role !== 'SYSTEM_ADMIN' && subscription.isLoading) {
-    return <div className="flex min-h-screen items-center justify-center bg-canvas text-slate-300">Verificando tu suscripción...</div>
+    return <div className="flex min-h-screen items-center justify-center bg-canvas text-slate-300">{isEnglish ? 'Verifying your subscription...' : 'Verificando tu suscripción...'}</div>
   }
 
   if (!canAccessWithoutSubscription && user?.role !== 'SYSTEM_ADMIN' && subscription.isSuccess && !subscription.data.subscription) {
@@ -53,7 +56,7 @@ export function AppLayout() {
           {label}
         </NavLink>
       ))}
-      {user?.role === 'SYSTEM_ADMIN' && <NavLink to="/system-admin" onClick={closeMenu} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${isActive ? 'bg-amber text-slate-950' : 'text-slate-300 hover:bg-panelMuted hover:text-white'}`}><Settings className="h-4 w-4" />Configuración del sistema</NavLink>}
+      {user?.role === 'SYSTEM_ADMIN' && <NavLink to="/system-admin" onClick={closeMenu} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${isActive ? 'bg-amber text-slate-950' : 'text-slate-300 hover:bg-panelMuted hover:text-white'}`}><Settings className="h-4 w-4" />{isEnglish ? 'System settings' : 'Configuración del sistema'}</NavLink>}
       {(user?.role === 'BUILDING_ADMIN' || user?.role === 'B2B_ADMIN' || user?.role === 'SYSTEM_ADMIN') && (
         <NavLink
           to="/building-admin"
@@ -65,7 +68,7 @@ export function AppLayout() {
           }
         >
           <ShieldAlert className="h-4 w-4" aria-hidden="true" />
-          Gestión de edificio
+          {isEnglish ? 'Building management' : 'Gestión de edificio'}
         </NavLink>
       )}
     </nav>
@@ -88,8 +91,8 @@ export function AppLayout() {
           {navigation}
 
           <div className="mt-auto rounded-2xl border border-dashed border-line p-3 text-sm text-slate-400">
-            <p className="font-medium text-slate-200">Sistema protegido</p>
-            <p className="mt-1">Simulacros, edificios y zonas seguras</p>
+            <p className="font-medium text-slate-200">{isEnglish ? 'Protected system' : 'Sistema protegido'}</p>
+            <p className="mt-1">{isEnglish ? 'Simulations, buildings and safe zones' : 'Simulacros, edificios y zonas seguras'}</p>
           </div>
         </aside>
 
@@ -104,7 +107,7 @@ export function AppLayout() {
         >
           <div className="mb-8 flex items-center justify-between">
             <span className="font-semibold text-white">QuakExit</span>
-            <button type="button" onClick={closeMenu} className="rounded-lg p-2 text-slate-300" aria-label="Cerrar menú">
+            <button type="button" onClick={closeMenu} className="rounded-lg p-2 text-slate-300" aria-label={isEnglish ? 'Close menu' : 'Cerrar menú'}>
               <X className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
@@ -114,24 +117,24 @@ export function AppLayout() {
         <main className="min-w-0 flex-1 p-3 md:p-6">
           <header className="mb-6 flex items-center justify-between rounded-2xl border border-line bg-panel px-4 py-3 shadow-soft">
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => setIsMenuOpen(true)} className="rounded-lg p-2 text-slate-300 md:hidden" aria-label="Abrir menú">
+              <button type="button" onClick={() => setIsMenuOpen(true)} className="rounded-lg p-2 text-slate-300 md:hidden" aria-label={isEnglish ? 'Open menu' : 'Abrir menú'}>
                 <Menu className="h-5 w-5" aria-hidden="true" />
               </button>
               <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Panel operativo</p>
-                <h1 className="text-xl font-semibold text-white">Dashboard QuakExit</h1>
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{isEnglish ? 'Operations panel' : 'Panel operativo'}</p>
+                <h1 className="text-xl font-semibold text-white">QuakExit {isEnglish ? 'Dashboard' : 'Dashboard'}</h1>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="relative rounded-full bg-panelMuted p-2 text-slate-300" aria-label="2 alertas pendientes">
+              <div className="relative rounded-full bg-panelMuted p-2 text-slate-300" aria-label={isEnglish ? '2 pending alerts' : '2 alertas pendientes'}>
                 <BellRing className="h-4 w-4" aria-hidden="true" />
                 <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-danger text-[8px] font-bold text-white">
                   2
                 </span>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-white">{user?.fullName ?? 'Usuario'}</p>
+                <p className="text-sm font-semibold text-white">{user?.fullName ?? (isEnglish ? 'User' : 'Usuario')}</p>
                 <p className="text-xs text-slate-400">{user?.role ?? 'HOMEOWNER'}</p>
               </div>
             </div>
